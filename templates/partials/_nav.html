@@ -1,0 +1,68 @@
+<nav
+      class="navbar navbar-expand-lg navbar-dark"
+      style="background-color: #50a85e"
+    >
+      <div class="container">
+
+
+        {% if user.is_authenticated and user.is_user%}
+          <a href="/users/home" class="navbar-brand"
+          ><i class="fa-solid fa-dumbbell"></i> FitLife</a>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a href="/trainers" class="nav-link">Trainers</a>
+            </li>
+            <li class="nav-item">
+            <li class="nav-item">
+              <a href="{% url "message_view_student" %}" class="nav-link">Messages</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "user_diet" %}" class="nav-link">My Diet</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "user_profile" %}" class="nav-link">Profile</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "user_logout" %}" class="nav-link">Logout</a>
+            </li>
+          </ul>
+        {% elif user.is_authenticated and not user.is_user %}
+          <a href="/users/teacher/home" class="navbar-brand"
+          ><i class="fa-solid fa-dumbbell"></i> FitLife</a>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a href="{% url "teachers_students" %}" class="nav-link">My Students</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "message_view_teacher" %}" class="nav-link">Messages</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "teacher_profile" %}" class="nav-link">Profile</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "user_logout" %}" class="nav-link">Logout</a>
+            </li>
+          </ul>
+        {% else %}
+          <a href="/" class="navbar-brand"
+          ><i class="fa-solid fa-dumbbell"></i> FitLife</a>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a href="/trainers" class="nav-link">Trainers</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "user_register" %}" class="nav-link">Sign Up</a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url "user_login" %}" class="nav-link">Sign In</a>
+            </li>
+            <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
+            <li class="nav-item">
+              <a href="/contact" class="nav-link">Contact</a>
+            </li>
+          </ul>
+        {% endif %}
+
+
+      </div>
+    </nav>
