@@ -2,9 +2,12 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 from .models import Interest, Profile
+from django.contrib.auth import authenticate, login, logout
 
 
 def index(request):
+    if request.user.is_authenticated:
+      return HttpResponse("Already logged in.")
     if request.method == 'GET':
         interest_areas = [
             "Artificial Intelligence and Machine Learning",
@@ -20,6 +23,9 @@ def index(request):
         ]
         return render(request, 'index/index.html', {'interest_areas': interest_areas})
     elif request.method == 'POST':
+        """
+        Üyelik İşleminin Gerçekleştirilmesi..
+        """
         name = request.POST.get('name')
         surname = request.POST.get('surname')
         email = request.POST.get('email')
@@ -64,5 +70,21 @@ def index(request):
              {"error": "Passwords do not match. Please enter matching passwords."},
              )
 
-def login(request):
-    return render(request, 'index/signin.html')
+def user_login(request):
+    if request.user.is_authenticated:
+        return HttpResponse("Already logged in.")
+
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            login(request, user)
+            return HttpResponse("Kullanıcı girişi gerçekleşti.")
+        else:
+            return render(request, 'index/signin.html', {"error": "Invalid email or password."})
+
+    elif request.method == 'GET':
+        return render(request, 'index/signin.html')
+
