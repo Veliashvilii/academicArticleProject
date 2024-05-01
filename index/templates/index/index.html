@@ -1,39 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Üye Ol</title>
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  {% include "partials/_nav.html" %}
-  <div class="container mt-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">Üye Ol</div>
-          <div class="card-body">
-            <form>
-              <div class="form-group">
-                <label for="name">Adınız:</label>
-                <input type="text" class="form-control" id="name" placeholder="Adınızı girin">
-              </div>
-              <div class="form-group">
-                <label for="email">E-posta Adresiniz:</label>
-                <input type="email" class="form-control" id="email" placeholder="E-posta adresinizi girin">
-              </div>
-              <div class="form-group">
-                <label for="password">Şifre:</label>
-                <input type="password" class="form-control" id="password" placeholder="Şifrenizi girin">
-              </div>
-              <button type="submit" class="btn btn-primary">Üye Ol</button>
-            </form>
-          </div>
+{% extends "layout.html" %} 
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Üye Ol</div>
+        <div class="card-body">
+          <form>
+            <div class="form-group">
+              <label for="name">Adınız:</label>
+              <input type="text" class="form-control" id="name" placeholder="Adınızı girin">
+            </div>
+            <div class="form-group">
+              <label for="surname">Soyadınız:</label>
+              <input type="text" class="form-control" id="surname" placeholder="Soyadınızı girin">
+            </div>
+            <div class="form-group">
+              <label for="email">E-posta Adresiniz:</label>
+              <input type="email" class="form-control" id="email" placeholder="E-posta adresinizi girin">
+            </div>
+            <div class="form-group">
+              <label for="gender">Cinsiyet:</label>
+              <select class="form-control" id="gender">
+                <option>Erkek</option>
+                <option>Kadın</option>
+                <option>Diğer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="password">Şifre:</label>
+              <input type="password" class="form-control" id="password" placeholder="Şifrenizi girin">
+            </div>
+            <div class="form-group">
+              <label for="confirm_password">Şifreyi Tekrar Girin:</label>
+              <input type="password" class="form-control" id="confirm_password" placeholder="Şifreyi tekrar girin">
+            </div>
+            <button type="submit" class="btn btn-primary">Üye Ol</button>
+          </form>
+        </div>
+        <div class="card-footer">
+          <p class="mb-0">Zaten üye misiniz? <a href="#">Giriş yapın</a></p>
         </div>
       </div>
     </div>
   </div>
-</body>
-</html>
-
+</div>
+{% endblock %}
