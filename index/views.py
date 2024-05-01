@@ -33,7 +33,11 @@ def index(request):
             """
             Kullanıcının girdiği mail kullanılıyor!
             """
-            return HttpResponse("Bu mail zaten var!")
+            return render(request, 'index/index.html',
+              {
+                "error": "This email address is already registered. Please use a different email address."
+              },
+              )
           else:
             """
             Kullanıcı oluşturulabilir!
@@ -45,18 +49,20 @@ def index(request):
               first_name=name,
               last_name=surname)
             user_extra = Profile.objects.create(user=user)
+            user.profile.interests.clear()
             for interest_name in interests:
-              #interest = Interest.objects.get(pk=interest_id)
               interest, _ = Interest.objects.get_or_create(name=interest_name)
-              user_extra.interests.add()
-            
-            ## İşlem burada olacak
-            return HttpResponse("Kayıt Başarılı Abi!")
+              user_extra.interests.add(interest)
+            return render(request, 'index/signin.html')
         else:
           """
           Şifreler uyuşmuyor uyarı ver!
           """
-          return HttpResponse("Şifreler de aynı değil ki abi!")
+          return render(
+             request,
+             'index/index.html',
+             {"error": "Passwords do not match. Please enter matching passwords."},
+             )
 
 def login(request):
     return render(request, 'index/signin.html')

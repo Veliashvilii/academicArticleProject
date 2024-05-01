@@ -9,6 +9,11 @@
         <div class="card-body">
           <form method="POST">
             {% csrf_token %}
+            {% if error %}
+            <div class="alert alert-danger">
+              {{error}}
+            </div>
+            {% endif %}
             <div class="form-group">
               <label for="name">Adınız:</label>
               <input type="text" class="form-control" id="name" name="name" placeholder="Adınızı girin">
