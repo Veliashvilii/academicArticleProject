@@ -20,4 +20,8 @@ def index(request):
     """
     Request in post olduğu durumda yapılacak işlemler
     """
-    pass
+    return render(request, 'index/signin.html')
+
+
+def login(request):
+  return render(request, 'index/signin.html')
