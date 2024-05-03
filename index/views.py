@@ -72,7 +72,7 @@ def index(request):
 
 def user_login(request):
     if request.user.is_authenticated:
-        return HttpResponse("Already logged in.")
+       return render(request, 'user/main.html')
 
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -81,7 +81,7 @@ def user_login(request):
         user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
-            return HttpResponse("Kullanıcı girişi gerçekleşti.")
+            return render(request, 'user/main.html')
         else:
             return render(request, 'index/signin.html', {"error": "Invalid email or password."})
     elif request.method == 'GET':
