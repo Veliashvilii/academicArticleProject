@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 
 def index(request):
     if request.user.is_authenticated:
-      return HttpResponse("Already logged in.")
+      return render(request, 'user/main.html')
     if request.method == 'GET':
         interest_areas = [
             "Artificial Intelligence and Machine Learning",
@@ -84,7 +84,10 @@ def user_login(request):
             return HttpResponse("Kullanıcı girişi gerçekleşti.")
         else:
             return render(request, 'index/signin.html', {"error": "Invalid email or password."})
-
     elif request.method == 'GET':
         return render(request, 'index/signin.html')
+    
+def user_logout(request):
+    logout(request)
+    return render(request, 'index/index.html')
 
