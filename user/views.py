@@ -20,7 +20,19 @@ def user_profile(request):
             "Automated Programming and Code Generation"
     ]
     if request.method == "GET":
-        return render(request, 'user/profile.html', {'interest_areas': interest_areas})
+        user = request.user
+        user_profile = Profile.objects.get(user=user)
+
+        name = user.first_name
+        surname = user.last_name
+        email = user.email
+        interests = user_profile.interests.all()
+        current_interests = []
+
+        for interest in interests:
+            current_interests.append(interest.name)
+
+        return render(request, 'user/profile.html', {'interest_areas': interest_areas, 'user': user, 'current_interests': current_interests})
     elif request.method == "POST":
         name = request.POST.get('name')
         surname = request.POST.get('surname')
