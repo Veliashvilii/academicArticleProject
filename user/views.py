@@ -1,6 +1,19 @@
 from django.shortcuts import render
 from django.contrib.auth import logout
 from index.models import Profile, Interest
+from index.views import connect_to_mongodb, get_vector_for_person
+import threading, pymongo
+
+def process_user_vector(email, interests):
+    collection = connect_to_mongodb("user_fasttext")
+    vector = get_vector_for_person(interests)
+    result = collection.update_one({"_id": email}, {"$set": {"vector": vector.tolist()}})
+    if result.modified_count > 0:
+        print("Belge güncellendi.")
+    else:
+        print("Belge güncellenemedi.")
+
+
 
 def user_logout(request):
     logout(request)
@@ -60,19 +73,22 @@ def user_profile(request):
                     {"error": "Please enter your password",
                       'interest_areas': interest_areas},
                     )
-        if name != "":
+        if name != "" and user.first_name != name:
             user.first_name = name
-        if surname != "":
+        if surname != "" and user.last_name != surname:
             user.last_name = surname
-        if email != "":
+        if email != "" and user.email != email:
             user.username = email
             user.email = email
         if interests != []:
-            user_profile = Profile.objects.get(user=user)
-            user_profile.interests.clear()
-            for interest in interests:
-                interest, created = Interest.objects.get_or_create(name=interest)
-                user_profile.interests.add(interest)
+            user_profile = Profile.objects.get(user=user) 
+            if set(interests) != set(user_profile.interests.values_list('name', flat=True)):
+                user_profile.interests.clear()
+                for interest in interests:
+                    interest, created = Interest.objects.get_or_create(name=interest)
+                    user_profile.interests.add(interest)
+                vector_thread = threading.Thread(target=process_user_vector, args=(email, interests))
+                vector_thread.start()
         user.save()
         user_profile.save()
         return render(request, 'user/profile.html', {'interest_areas': interest_areas})
