@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth import logout
 from index.models import Profile, Interest
 from index.views import connect_to_mongodb, get_vector_for_person
-import threading, pymongo
+import threading
 
 def process_user_vector(email, interests):
     collection = connect_to_mongodb("user_fasttext")
@@ -12,8 +12,6 @@ def process_user_vector(email, interests):
         print("Belge güncellendi.")
     else:
         print("Belge güncellenemedi.")
-
-
 
 def user_logout(request):
     logout(request)

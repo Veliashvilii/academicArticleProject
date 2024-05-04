@@ -34,7 +34,7 @@ def process_user_vector(email, interests):
 
 def index(request):
     if request.user.is_authenticated:
-      return render(request, 'user/main.html')
+      return render(request, 'user/main.html', {"num_of_cards": range(5)})
     if request.method == 'GET':
         interest_areas = [
             "Artificial Intelligence and Machine Learning",
@@ -104,7 +104,7 @@ def index(request):
 
 def user_login(request):
     if request.user.is_authenticated:
-       return render(request, 'user/main.html')
+       return render(request, 'user/main.html', {"num_of_cards": range(5)})
 
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -113,7 +113,7 @@ def user_login(request):
         user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
-            return render(request, 'user/main.html')
+            return render(request, 'user/main.html', {"num_of_cards": range(5)})
         else:
             return render(request, 'index/signin.html', {"error": "Invalid email or password."})
     elif request.method == 'GET':

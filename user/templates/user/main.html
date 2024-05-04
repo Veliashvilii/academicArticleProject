@@ -12,5 +12,18 @@
       </form>
     </div>
   </div>
+
+  <div class="row mt-5">
+    {% for i in num_of_cards %}
+    <div class="col-md-12 mb-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Başlık {{ i }}</h5>
+          <p class="card-text">Kart içeriği buraya gelecek.</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}
