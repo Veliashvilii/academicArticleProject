@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 import pymongo
 import numpy as np
 import fasttext
-import threading
+import threading, os
 
 def connect_to_mongodb(collection):
     client = pymongo.MongoClient("mongodb://localhost:27017/") 
@@ -22,6 +22,47 @@ def save_user_vector_to_mongodb(collection, email, vector):
     collection.insert_one(user_data)
     print("Kullanıcı vektörü başarıyla MongoDB'ye kaydedildi.")
 
+def get_data_from_mongodb(collection):
+    data = []
+    cursor = collection.find({})
+    for document in cursor:
+        data.append(document)
+    return data
+
+def get_data_from_mongodb_user(collection, email):
+    data = collection.find_one({"_id": email})
+    return data if data else {}
+
+def cosine_similarity(vec1, vec2):
+    dot_product = np.dot(vec1, vec2)
+    norm_vec1 = np.linalg.norm(vec1)
+    norm_vec2 = np.linalg.norm(vec2)
+    similarity = dot_product / (norm_vec1 * norm_vec2)
+    return similarity
+
+def get_top_similar_articles(user_vector, article_vectors):
+    similarities = []
+    for article_id, article_vector in article_vectors.items():
+        similarity = cosine_similarity(user_vector, article_vector)
+        similarities.append((article_id, similarity))
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    top_similar_articles = similarities[:5]
+    return top_similar_articles
+
+def get_suggest_to_fasttext(email):
+    collectionArticle = connect_to_mongodb("fastext_collection")
+    collectionUser = connect_to_mongodb("user_fasttext")
+
+    article_data = get_data_from_mongodb(collectionArticle)
+    user_data = get_data_from_mongodb_user(collectionUser, email)
+
+    user_vector = user_data.get('vector')
+
+    article_vectors = {article['_id']: article['vector'] for article in article_data}
+
+    top_similar_articles = get_top_similar_articles(user_vector, article_vectors)
+    return top_similar_articles
+
 def get_vector_for_person(person):
     model = fasttext.load_model("cc.en.300.bin")
     person_vector = np.mean([model.get_word_vector(word) for word in person], axis=0)
@@ -32,9 +73,24 @@ def process_user_vector(email, interests):
     vector = get_vector_for_person(interests)
     save_user_vector_to_mongodb(collection, email, vector)
 
+
+
+def get_article_text(article_id):
+    base_path = "/Users/veliashvili/Desktop/Krapivin2009/docsutf8"
+    file_path = os.path.join(base_path, f"{article_id}.txt")
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            article_text = file.read()
+        return article_text
+    else:
+        return None
+
+
+
 def index(request):
     if request.user.is_authenticated:
-      return render(request, 'user/main.html', {"num_of_cards": range(5)})
+      fasttextSuggest = get_suggest_to_fasttext(request.user.email)
+      return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest})
     if request.method == 'GET':
         interest_areas = [
             "Artificial Intelligence and Machine Learning",
@@ -101,10 +157,20 @@ def index(request):
              'index/index.html',
              {"error": "Passwords do not match. Please enter matching passwords."},
              )
+        
+def read_article(request):
+    """
+    Tıklanan Makalenin Ekranda işlenmesi
+    """
+    if request.method == 'POST':  
+      article_name = request.POST.get('article_name')
+      article_text = get_article_text(article_name)
+      return render(request, 'user/article.html', {"article_name":article_name, "article_text":article_text})
 
 def user_login(request):
     if request.user.is_authenticated:
-       return render(request, 'user/main.html', {"num_of_cards": range(5)})
+      fasttextSuggest = get_suggest_to_fasttext(request.user.email)
+      return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest})
 
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -113,7 +179,8 @@ def user_login(request):
         user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
-            return render(request, 'user/main.html', {"num_of_cards": range(5)})
+            fasttextSuggest = get_suggest_to_fasttext(request.user.email)
+            return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest})
         else:
             return render(request, 'index/signin.html', {"error": "Invalid email or password."})
     elif request.method == 'GET':
