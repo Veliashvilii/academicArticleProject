@@ -3,7 +3,34 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 from .models import Interest, Profile
 from django.contrib.auth import authenticate, login, logout
+import pymongo
+import numpy as np
+import fasttext
+import threading
 
+def connect_to_mongodb(collection):
+    client = pymongo.MongoClient("mongodb://localhost:27017/") 
+    db = client["vectors"]
+    collection = db[collection]
+    return collection
+
+def save_user_vector_to_mongodb(collection, email, vector):
+    user_data = {
+        "_id": email,
+        "vector": vector.tolist()
+    }
+    collection.insert_one(user_data)
+    print("Kullanıcı vektörü başarıyla MongoDB'ye kaydedildi.")
+
+def get_vector_for_person(person):
+    model = fasttext.load_model("cc.en.300.bin")
+    person_vector = np.mean([model.get_word_vector(word) for word in person], axis=0)
+    return person_vector
+
+def process_user_vector(email, interests):
+    collection = connect_to_mongodb("user_fasttext")
+    vector = get_vector_for_person(interests)
+    save_user_vector_to_mongodb(collection, email, vector)
 
 def index(request):
     if request.user.is_authenticated:
@@ -59,6 +86,11 @@ def index(request):
             for interest_name in interests:
               interest, _ = Interest.objects.get_or_create(name=interest_name)
               user_extra.interests.add(interest)
+            
+            # To optimize the project, vector operations should be run asynchronously.
+            vector_thread = threading.Thread(target=process_user_vector, args=(email, interests))
+            vector_thread.start()
+
             return render(request, 'index/signin.html')
         else:
           """
