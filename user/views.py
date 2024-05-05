@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.contrib.auth import logout
 from index.models import Profile, Interest
-from index.views import connect_to_mongodb, get_vector_for_person, get_vector_for_person_scibert
+from index.views import connect_to_mongodb, get_vector_for_person, get_vector_for_person_scibert, get_data_from_mongodb_user, get_data_from_mongodb
 import threading
+import numpy as np
 
 def process_user_vector(email, interests):
     collection = connect_to_mongodb("user_fasttext")
@@ -21,6 +22,13 @@ def process_user_vector_scibert(email, interests):
         print("SCIBERT Belge güncellendi.")
     else:
         print("SCIBERT Belge güncellenemedi.")
+
+def update_user_vector_to_mongodb(collection, id, vector):
+    result = collection.update_one({"_id": id}, {"$set": {"vector": vector.tolist()}})
+    if result.modified_count > 0:
+        print("User FastText Belge güncellendi.")
+    else:
+        print("User FastText Belge güncellenemedi.")
 
 def user_logout(request):
     logout(request)
@@ -101,6 +109,68 @@ def user_profile(request):
         user.save()
         user_profile.save()
         return render(request, 'user/profile.html', {'interest_areas': interest_areas})
+
+
+def like_article(request):
+    if request.method == 'POST':
+        article_like = request.POST.get('article_like')
+        article_name = request.POST.get('article_name')
+        article_text = request.POST.get('article_text')
+        email = request.user.email
+
+        id = int(article_name)
+
+        collectionFastText = connect_to_mongodb("fastext_collection")
+        collectionUserFastText = connect_to_mongodb("user_fasttext")
+        userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
+        articleFastText = get_data_from_mongodb_user(collectionFastText, id)
+        fastTextArticleVector = articleFastText['vector']
+        fastTextUserVector = userFastText['vector']
+
+        newFastTextVector = update_user_vector_like_fasttext(fastTextUserVector, fastTextArticleVector)
+
+        update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
+
+        return render(request, 'user/article.html', {"article_name": article_name, "article_text": article_text})
+    else:
+        pass
+
+def dislike_article(request):
+    if request.method == 'POST':
+        article_like = request.POST.get('article_like')
+        article_name = request.POST.get('article_name')
+        article_text = request.POST.get('article_text')
+        email = request.user.email
+        id = int(article_name)
+
+        collectionFastText = connect_to_mongodb("fastext_collection")
+        collectionUserFastText = connect_to_mongodb("user_fasttext")
+        userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
+        articleFastText = get_data_from_mongodb_user(collectionFastText, id)
+        fastTextArticleVector = articleFastText['vector']
+        fastTextUserVector = userFastText['vector']
+
+        newFastTextVector = update_user_vector_dislike_fasttext(fastTextUserVector, fastTextArticleVector)
+
+        update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
+        return render(request, 'user/article.html', {"article_name": article_name, "article_text": article_text})
+    else:
+        pass
+
+
+
+def update_user_vector_like_fasttext(vec1, vec2):
+    user_vector = np.array(vec1)
+    article_vector = np.array(vec2)
+    new_user_vector = (user_vector + article_vector) / 2
+    return new_user_vector
+
+def update_user_vector_dislike_fasttext(vec1, vec2):
+    user_vector = np.array(vec1)
+    article_vector = np.array(vec2)
+    new_user_vector = (user_vector - article_vector) / 2
+    return new_user_vector
+
 
 
 
