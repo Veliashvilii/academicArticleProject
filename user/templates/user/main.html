@@ -22,7 +22,7 @@
           <h5 class="card-title">Başlık {{ article_name }}</h5>
           <p class="card-text">Benzerlik Oranı: {{ similarity }}</p>
         </div>
-        <form action="{% url 'read_article' %}" method="post">
+        <form action="{% url 'read_article' %}" method="POST">
           {% csrf_token %}
           <input type="hidden" name="article_name" value="{{ article_name }}">
         <div class="card-footer text-right">
@@ -35,16 +35,20 @@
   </div>
   <div class="row mt-5">
     <h3>SCIBERT Önerileri</h3>
-    {% for i in num_of_cards %}
+    {% for article_name, similarity in scibertSuggest %}
     <div class="col-md-12 mb-3">
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">Başlık {{ i }}</h5>
-          <p class="card-text">Kart içeriği buraya gelecek.</p>
+          <h5 class="card-title">Başlık {{ article_name }}</h5>
+          <p class="card-text">Benzerlik Oranı: {{ similarity }}</p>
         </div>
-            <div class="card-footer text-right">
-      <button type="button" class="btn btn-sm btn-outline-primary">Oku</button>
-    </div>
+        <form action="{% url 'read_article' %}" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="article_name" value="{{ article_name }}">
+        <div class="card-footer text-right">
+          <button type="submit" class="btn btn-sm btn-outline-primary">Oku</button>
+        </div>
+      </form>
       </div>
     </div>
     {% endfor %}

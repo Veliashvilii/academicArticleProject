@@ -65,6 +65,20 @@ def get_suggest_to_fasttext(email):
     top_similar_articles = get_top_similar_articles(user_vector, article_vectors)
     return top_similar_articles
 
+def get_suggest_to_scibert(email):
+    collectionArticle = connect_to_mongodb("scibert_collection")
+    collectionUser = connect_to_mongodb("user_scibert")
+
+    article_data = get_data_from_mongodb(collectionArticle)
+    user_data = get_data_from_mongodb_user(collectionUser, email)
+
+    user_vector = user_data.get('vector')
+
+    article_vectors = {article['_id']: article['vector'] for article in article_data}
+
+    top_similar_articles = get_top_similar_articles(user_vector, article_vectors)
+    return top_similar_articles
+
 def get_vector_for_person(person):
     model = fasttext.load_model("cc.en.300.bin")
     person_vector = np.mean([model.get_word_vector(word) for word in person], axis=0)
@@ -110,7 +124,8 @@ def get_article_text(article_id):
 def index(request):
     if request.user.is_authenticated:
       fasttextSuggest = get_suggest_to_fasttext(request.user.email)
-      return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest})
+      scibertSuggest = get_suggest_to_scibert(request.user.email)
+      return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest, "scibertSuggest": scibertSuggest})
     if request.method == 'GET':
         interest_areas = [
             "Artificial Intelligence and Machine Learning",
@@ -192,7 +207,8 @@ def read_article(request):
 def user_login(request):
     if request.user.is_authenticated:
       fasttextSuggest = get_suggest_to_fasttext(request.user.email)
-      return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest})
+      scibertSuggest = get_suggest_to_scibert(request.user.email)
+      return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest, "scibertSuggest": scibertSuggest})
 
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -202,7 +218,8 @@ def user_login(request):
         if user is not None:
             login(request, user)
             fasttextSuggest = get_suggest_to_fasttext(request.user.email)
-            return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest})
+            scibertSuggest = get_suggest_to_scibert(request.user.email)
+            return render(request, 'user/main.html', {"fastTextSuggest": fasttextSuggest, "scibertSuggest": scibertSuggest})
         else:
             return render(request, 'index/signin.html', {"error": "Invalid email or password."})
     elif request.method == 'GET':
