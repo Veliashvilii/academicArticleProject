@@ -7,6 +7,8 @@ import pymongo
 import numpy as np
 import fasttext
 import threading, os
+from transformers import AutoTokenizer, AutoModel
+import torch
 
 def connect_to_mongodb(collection):
     client = pymongo.MongoClient("mongodb://localhost:27017/") 
@@ -68,11 +70,29 @@ def get_vector_for_person(person):
     person_vector = np.mean([model.get_word_vector(word) for word in person], axis=0)
     return person_vector
 
+def get_vector_for_person_scibert(person):
+    personToText = ""
+    for interest in person:
+        personToText = personToText + " " + interest
+    print(f"Oldu mu: {personToText}")
+    tokenizer = AutoTokenizer.from_pretrained("allenai/scibert_scivocab_uncased")
+    model = AutoModel.from_pretrained("allenai/scibert_scivocab_uncased")
+
+    inputs = tokenizer(personToText, return_tensors="pt", max_length=512, truncation=True)
+    with torch.no_grad():
+        outputs = model(**inputs)
+    text_vector = np.array(outputs.last_hidden_state.mean(dim=1).squeeze())
+    return text_vector
+
 def process_user_vector(email, interests):
     collection = connect_to_mongodb("user_fasttext")
     vector = get_vector_for_person(interests)
     save_user_vector_to_mongodb(collection, email, vector)
 
+def process_user_vector_scibert(email, interests):
+    collection = connect_to_mongodb("user_scibert")
+    vector = get_vector_for_person_scibert(interests)
+    save_user_vector_to_mongodb(collection, email, vector)
 
 
 def get_article_text(article_id):
@@ -145,7 +165,9 @@ def index(request):
             
             # To optimize the project, vector operations should be run asynchronously.
             vector_thread = threading.Thread(target=process_user_vector, args=(email, interests))
+            vector_scibert_thread = threading.Thread(target=process_user_vector_scibert, args=(email, interests))
             vector_thread.start()
+            vector_scibert_thread.start()
 
             return render(request, 'index/signin.html')
         else:
