@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth import logout
 from index.models import Profile, Interest
-from index.views import connect_to_mongodb, get_vector_for_person
+from index.views import connect_to_mongodb, get_vector_for_person, get_vector_for_person_scibert
 import threading
 
 def process_user_vector(email, interests):
@@ -9,9 +9,18 @@ def process_user_vector(email, interests):
     vector = get_vector_for_person(interests)
     result = collection.update_one({"_id": email}, {"$set": {"vector": vector.tolist()}})
     if result.modified_count > 0:
-        print("Belge güncellendi.")
+        print("FastText Belge güncellendi.")
     else:
-        print("Belge güncellenemedi.")
+        print("FastText Belge güncellenemedi.")
+
+def process_user_vector_scibert(email, interests):
+    collection = connect_to_mongodb("user_scibert")
+    vector = get_vector_for_person_scibert(interests)
+    result = collection.update_one({"_id": email}, {"$set": {"vector": vector.tolist()}})
+    if result.modified_count > 0:
+        print("SCIBERT Belge güncellendi.")
+    else:
+        print("SCIBERT Belge güncellenemedi.")
 
 def user_logout(request):
     logout(request)
@@ -86,7 +95,9 @@ def user_profile(request):
                     interest, created = Interest.objects.get_or_create(name=interest)
                     user_profile.interests.add(interest)
                 vector_thread = threading.Thread(target=process_user_vector, args=(email, interests))
+                vector_scibert_thread = threading.Thread(target=process_user_vector_scibert, args=(email, interests))
                 vector_thread.start()
+                vector_scibert_thread.start()
         user.save()
         user_profile.save()
         return render(request, 'user/profile.html', {'interest_areas': interest_areas})
