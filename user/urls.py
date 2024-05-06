@@ -6,4 +6,5 @@ urlpatterns = [
   path('profile', views.user_profile, name='show_profile'),
   path('like_article/', views.like_article, name='like_article'),
   path('dislike_article/', views.dislike_article, name='dislike_article'),
+  path('search/', views.user_search, name='user_search'),
 ]

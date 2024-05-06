@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from django.contrib.auth import logout
 from index.models import Profile, Interest
-from index.views import connect_to_mongodb, get_vector_for_person, get_vector_for_person_scibert, get_data_from_mongodb_user, get_data_from_mongodb
+from index.views import connect_to_mongodb, get_vector_for_person, get_vector_for_person_scibert, get_data_from_mongodb_user, get_data_from_mongodb, get_top_similar_articles
 import threading
 import numpy as np
+from django.http import HttpResponse
 
 def process_user_vector(email, interests):
     collection = connect_to_mongodb("user_fasttext")
@@ -196,6 +197,39 @@ def dislike_article(request):
                                                       )
     else:
         pass
+
+def user_search(request):
+    if request.method == 'POST':
+        keyword = request.POST.get('search')
+        email = request.user.email
+
+        keywordVectorFastText = get_vector_for_person(keyword)
+        keywordVectorSCIBERT = get_vector_for_person_scibert(keyword)
+
+        collectionUserFastText = connect_to_mongodb("user_fasttext")
+        userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
+        userFastTextVector = userFastText['vector']
+        newFastTextVector = update_user_vector_like(userFastTextVector, keywordVectorFastText)
+
+        collectionUserSCIBERT = connect_to_mongodb("user_scibert")
+        userSCIBERT = get_data_from_mongodb_user(collectionUserSCIBERT, email)
+        userSCIBERTVector = userSCIBERT['vector']
+        newSCIBERTVector = update_user_vector_like(userSCIBERTVector, keywordVectorSCIBERT)
+
+        fastTextSuggest = get_suggest_to_search("fastext_collection", newFastTextVector)
+        SCIBERTSuggest = get_suggest_to_search("scibert_collection", newSCIBERTVector)
+
+        return render(request, 'user/main.html', {"fastTextSuggest": fastTextSuggest, "scibertSuggest": SCIBERTSuggest})
+    
+def get_suggest_to_search(collection, keywordVector):
+    collectionArticle = connect_to_mongodb(collection)
+
+    article_data = get_data_from_mongodb(collectionArticle)
+
+    article_vectors = {article['_id']: article['vector'] for article in article_data}
+
+    top_similar_articles = get_top_similar_articles(keywordVector, article_vectors)
+    return top_similar_articles
 
 def update_user_vector_like(vec1, vec2):
     """
