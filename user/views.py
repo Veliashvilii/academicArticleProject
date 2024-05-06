@@ -210,14 +210,19 @@ def user_search(request):
         userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
         userFastTextVector = userFastText['vector']
         newFastTextVector = update_user_vector_like(userFastTextVector, keywordVectorFastText)
+        newFastTextUserVector = update_user_vector_search(userFastTextVector, keywordVectorFastText)
 
         collectionUserSCIBERT = connect_to_mongodb("user_scibert")
         userSCIBERT = get_data_from_mongodb_user(collectionUserSCIBERT, email)
         userSCIBERTVector = userSCIBERT['vector']
         newSCIBERTVector = update_user_vector_like(userSCIBERTVector, keywordVectorSCIBERT)
+        newSCIBERTUserVector = update_user_vector_search(userSCIBERTVector, keywordVectorSCIBERT)
 
         fastTextSuggest = get_suggest_to_search("fastext_collection", newFastTextVector)
         SCIBERTSuggest = get_suggest_to_search("scibert_collection", newSCIBERTVector)
+
+        update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextUserVector)
+        update_user_vector_to_mongodb(collectionUserSCIBERT, email, newSCIBERTUserVector)
 
         return render(request, 'user/main.html', {"fastTextSuggest": fastTextSuggest, "scibertSuggest": SCIBERTSuggest})
     
@@ -250,6 +255,19 @@ def update_user_vector_dislike(vec1, vec2):
     """
     user_weight = 0.7
     article_weight = -0.3
+
+    user_vector = np.array(vec1)
+    article_vector = np.array(vec2)
+
+    new_user_vector = (user_weight * user_vector) + (article_weight * article_vector)
+    return new_user_vector
+
+def update_user_vector_search(vec1, vec2):
+    """
+    Birinci vektör kullanıcı vektörü, ikinciyse makale vektörü olmalıdır.
+    """
+    user_weight = 0.8
+    article_weight = 0.2
 
     user_vector = np.array(vec1)
     article_vector = np.array(vec2)
