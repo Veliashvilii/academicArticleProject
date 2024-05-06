@@ -26,9 +26,9 @@ def process_user_vector_scibert(email, interests):
 def update_user_vector_to_mongodb(collection, id, vector):
     result = collection.update_one({"_id": id}, {"$set": {"vector": vector.tolist()}})
     if result.modified_count > 0:
-        print("User FastText Belge güncellendi.")
+        print("User Belge güncellendi.")
     else:
-        print("User FastText Belge güncellenemedi.")
+        print("User Belge güncellenemedi.")
 
 def user_logout(request):
     logout(request)
@@ -130,12 +130,22 @@ def like_article(request):
             fastTextArticleVector = articleFastText['vector']
             fastTextUserVector = userFastText['vector']
 
-            newFastTextVector = update_user_vector_like_fasttext(fastTextUserVector, fastTextArticleVector)
+            newFastTextVector = update_user_vector_like(fastTextUserVector, fastTextArticleVector)
             print("Makale Beğenildi!")
 
             update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
         elif suggest_type == "SCIBERT":
-            pass
+            collectionSCIBERT = connect_to_mongodb("scibert_collection")
+            collectionUserSCIBERT = connect_to_mongodb("user_scibert")
+            userSCIBERT = get_data_from_mongodb_user(collectionUserSCIBERT, email)
+            articleSCIBERT = get_data_from_mongodb_user(collectionSCIBERT, id)
+            SCIBERTArticleVector = articleSCIBERT['vector']
+            SCIBERTUserVector = userSCIBERT['vector']
+
+            newSCIBERTVector = update_user_vector_like(SCIBERTUserVector, SCIBERTArticleVector)
+            print("SCIBERT Makale beğenildi.")
+
+            update_user_vector_to_mongodb(collectionUserSCIBERT, email, newSCIBERTVector)
 
         return render(request, 'user/article.html', {"article_name": article_name,
                                                      "article_text": article_text,
@@ -162,12 +172,23 @@ def dislike_article(request):
             fastTextArticleVector = articleFastText['vector']
             fastTextUserVector = userFastText['vector']
 
-            newFastTextVector = update_user_vector_dislike_fasttext(fastTextUserVector, fastTextArticleVector)
+            newFastTextVector = update_user_vector_dislike(fastTextUserVector, fastTextArticleVector)
             print("Makale Beğenilmedi!")
 
             update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
         elif suggest_type == "SCIBERT":
-            pass
+            collectionSCIBERT = connect_to_mongodb("scibert_collection")
+            collectionUserSCIBERT = connect_to_mongodb("user_scibert")
+            userSCIBERT = get_data_from_mongodb_user(collectionUserSCIBERT, email)
+            articleSCIBERT = get_data_from_mongodb_user(collectionSCIBERT, id)
+            SCIBERTArticleVector = articleSCIBERT['vector']
+            SCIBERTUserVector = userSCIBERT['vector']
+
+            newSCIBERTVector = update_user_vector_dislike(SCIBERTUserVector, SCIBERTArticleVector)
+            print("SCIBERT Makale beğenilmedi.")
+
+            update_user_vector_to_mongodb(collectionUserSCIBERT, email, newSCIBERTVector)
+
         return render(request, 'user/article.html', {"article_name": article_name,
                                                       "article_text": article_text,
                                                       "suggest_type": suggest_type,
@@ -176,21 +197,28 @@ def dislike_article(request):
     else:
         pass
 
+def update_user_vector_like(vec1, vec2):
+    """
+    Birinci vektör kullanıcı vektörü, ikinciyse makale vektörü olmalıdır.
+    """
+    user_weight = 0.7
+    article_weight = 0.3
 
-
-def update_user_vector_like_fasttext(vec1, vec2):
     user_vector = np.array(vec1)
     article_vector = np.array(vec2)
-    new_user_vector = (user_vector + article_vector) / 2
+
+    new_user_vector = (user_weight * user_vector) + (article_weight * article_vector)
     return new_user_vector
 
-def update_user_vector_dislike_fasttext(vec1, vec2):
+def update_user_vector_dislike(vec1, vec2):
+    """
+    Birinci vektör kullanıcı vektörü, ikinciyse makale vektörü olmalıdır.
+    """
+    user_weight = 0.7
+    article_weight = -0.3
+
     user_vector = np.array(vec1)
     article_vector = np.array(vec2)
-    new_user_vector = (user_vector - article_vector) / 2
+
+    new_user_vector = (user_weight * user_vector) + (article_weight * article_vector)
     return new_user_vector
-
-
-
-
-
