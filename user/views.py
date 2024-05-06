@@ -118,22 +118,24 @@ def like_article(request):
         article_text = request.POST.get('article_text')
         email = request.user.email
         suggest_type = request.POST.get('suggest_type')
+        id = int(article_name)
 
         print(f"Makale Türü: {suggest_type}")
 
-        id = int(article_name)
+        if suggest_type == "FastText":
+            collectionFastText = connect_to_mongodb("fastext_collection")
+            collectionUserFastText = connect_to_mongodb("user_fasttext")
+            userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
+            articleFastText = get_data_from_mongodb_user(collectionFastText, id)
+            fastTextArticleVector = articleFastText['vector']
+            fastTextUserVector = userFastText['vector']
 
-        collectionFastText = connect_to_mongodb("fastext_collection")
-        collectionUserFastText = connect_to_mongodb("user_fasttext")
-        userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
-        articleFastText = get_data_from_mongodb_user(collectionFastText, id)
-        fastTextArticleVector = articleFastText['vector']
-        fastTextUserVector = userFastText['vector']
+            newFastTextVector = update_user_vector_like_fasttext(fastTextUserVector, fastTextArticleVector)
+            print("Makale Beğenildi!")
 
-        newFastTextVector = update_user_vector_like_fasttext(fastTextUserVector, fastTextArticleVector)
-        print("Makale Beğenildi!")
-
-        update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
+            update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
+        elif suggest_type == "SCIBERT":
+            pass
 
         return render(request, 'user/article.html', {"article_name": article_name,
                                                      "article_text": article_text,
@@ -150,22 +152,22 @@ def dislike_article(request):
         article_text = request.POST.get('article_text')
         email = request.user.email
         id = int(article_name)
-
         suggest_type = request.POST.get('suggest_type')
 
-        print(f"Makale Türü: {suggest_type}")
+        if suggest_type == "FastText":
+            collectionFastText = connect_to_mongodb("fastext_collection")
+            collectionUserFastText = connect_to_mongodb("user_fasttext")
+            userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
+            articleFastText = get_data_from_mongodb_user(collectionFastText, id)
+            fastTextArticleVector = articleFastText['vector']
+            fastTextUserVector = userFastText['vector']
 
-        collectionFastText = connect_to_mongodb("fastext_collection")
-        collectionUserFastText = connect_to_mongodb("user_fasttext")
-        userFastText = get_data_from_mongodb_user(collectionUserFastText, email)
-        articleFastText = get_data_from_mongodb_user(collectionFastText, id)
-        fastTextArticleVector = articleFastText['vector']
-        fastTextUserVector = userFastText['vector']
+            newFastTextVector = update_user_vector_dislike_fasttext(fastTextUserVector, fastTextArticleVector)
+            print("Makale Beğenilmedi!")
 
-        newFastTextVector = update_user_vector_dislike_fasttext(fastTextUserVector, fastTextArticleVector)
-        print("Makale Beğenilmedi!")
-
-        update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
+            update_user_vector_to_mongodb(collectionUserFastText, email, newFastTextVector)
+        elif suggest_type == "SCIBERT":
+            pass
         return render(request, 'user/article.html', {"article_name": article_name,
                                                       "article_text": article_text,
                                                       "suggest_type": suggest_type,
