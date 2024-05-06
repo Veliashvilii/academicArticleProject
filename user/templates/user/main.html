@@ -25,6 +25,7 @@
         <form action="{% url 'read_article' %}" method="POST">
           {% csrf_token %}
           <input type="hidden" name="article_name" value="{{ article_name }}">
+          <input type="hidden" name="suggest_type" value="FastText">
         <div class="card-footer text-right">
           <button type="submit" class="btn btn-sm btn-outline-primary">Oku</button>
         </div>
@@ -45,6 +46,7 @@
         <form action="{% url 'read_article' %}" method="POST">
           {% csrf_token %}
           <input type="hidden" name="article_name" value="{{ article_name }}">
+          <input type="hidden" name="suggest_type" value="SCIBERT">
         <div class="card-footer text-right">
           <button type="submit" class="btn btn-sm btn-outline-primary">Oku</button>
         </div>

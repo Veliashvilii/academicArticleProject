@@ -202,7 +202,12 @@ def read_article(request):
     if request.method == 'POST':  
       article_name = request.POST.get('article_name')
       article_text = get_article_text(article_name)
-      return render(request, 'user/article.html', {"article_name":article_name, "article_text":article_text})
+      suggest_type = request.POST.get('suggest_type')
+      return render(request, 'user/article.html', {"article_name":article_name,
+                                                    "article_text":article_text,
+                                                    "suggest_type": suggest_type
+                                                    }
+                                                     )
 
 def user_login(request):
     if request.user.is_authenticated:

@@ -15,6 +15,7 @@
                         <input type="hidden" name="article_like" value="like">
                         <input type="hidden" name="article_name" value="{{ article_name }}">
                         <input type="hidden" name="article_text" value="{{ article_text }}">
+                        <input type="hidden" name="suggest_type" value="{{ suggest_type }}">
                         <button type="submit" class="btn btn-success">Like</button>
                     </form>
                     <form id="dislike-form" class="float-right" method="POST" action="{% url 'dislike_article' %}">
@@ -22,6 +23,7 @@
                         <input type="hidden" name="article_like" value="dislike">
                         <input type="hidden" name="article_name" value="{{ article_name }}">
                         <input type="hidden" name="article_text" value="{{ article_text }}">
+                        <input type="hidden" name="suggest_type" value="{{ suggest_type }}">
                         <button type="submit" class="btn btn-danger">Dislike</button>
                     </form>
                 </div>
